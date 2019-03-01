@@ -8,7 +8,8 @@ const Product = require('../models/product.model');
 const router = express.Router();
 
 router.get('/', (req, res, next) => {
-    Order.find().select('_id productId quantity')
+    Order.find().select('_id product quantity')
+        .populate('product', 'name')
         .exec().then((orders) => {
             console.log(chalk.yellow('Find all order: ' + JSON.stringify(orders)));
             if (orders.length) {
@@ -18,7 +19,7 @@ router.get('/', (req, res, next) => {
                     orders: orders.map((order) => {
                         return {
                             _id: order.id,
-                            productId: order.productId,
+                            product: order.product,
                             quantity: order.quantity,
                             request: {
                                 type: 'GET',
@@ -49,13 +50,11 @@ router.post('/', (req, res, next) => {
                     message: 'Product not found'
                 });
             }
-
             const order = new Order({
                 _id: mongoose.Types.ObjectId(),
-                productId: req.body.productId,
+                product: req.body.productId,
                 quantity: req.body.quantity
             });
-
             return order.save();
         }).then((result) => {
             if (result) {
@@ -64,7 +63,7 @@ router.post('/', (req, res, next) => {
                     message: 'Order created',
                     createdOrder: {
                         _id: result._id,
-                        productId: result.productId,
+                        product: result.product,
                         quantity: result.quantity,
                         request: {
                             type: 'GET',
@@ -89,7 +88,8 @@ router.post('/', (req, res, next) => {
 
 router.get('/:orderId', (req, res, next) => {
     const id = req.params.orderId;
-    Order.findById({ _id: id }).exec()
+    Order.findById({ _id: id })
+        .populate('product').exec()
         .then((order) => {
             if (order) {
                 console.log(chalk.yellow('Find order by id: ' + JSON.stringify(order)));
@@ -97,7 +97,7 @@ router.get('/:orderId', (req, res, next) => {
                     message: 'Find order by id success',
                     order: {
                         _id: order.id,
-                        productId: order.productId,
+                        product: order.product,
                         quantity: order.quantity,
                         request: {
                             type: 'GET',
@@ -121,7 +121,7 @@ router.get('/:orderId', (req, res, next) => {
 });
 
 router.delete('/:orderId', (req, res, next) => {
-    const id = req.params.id;
+    const id = req.params.orderId;
     Order.deleteOne({ _id: id }).exec()
         .then((result) => {
             console.log(chalk.yellow('Delete order by id: ' + JSON.stringify(result)));
