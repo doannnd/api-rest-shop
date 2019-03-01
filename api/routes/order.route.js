@@ -1,35 +1,152 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const chalk = require('chalk');
+
+const Order = require('../models/order.model');
+const Product = require('../models/product.model');
+
 const router = express.Router();
 
 router.get('/', (req, res, next) => {
-    res.status(200).json({
-        message: "GET/order/"
-    });
+    Order.find().select('_id productId quantity')
+        .exec().then((orders) => {
+            console.log(chalk.yellow('Find all order: ' + JSON.stringify(orders)));
+            if (orders.length) {
+                res.send({
+                    message: 'Find all order success',
+                    count: orders.length,
+                    orders: orders.map((order) => {
+                        return {
+                            _id: order.id,
+                            productId: order.productId,
+                            quantity: order.quantity,
+                            request: {
+                                type: 'GET',
+                                description: 'GET_ORDER_BY_ID',
+                                url: 'http://localhost:3000/order/' + order.id
+                            }
+                        }
+                    })
+                });
+            } else {
+                res.status(404).json({
+                    message: 'No entries point'
+                });
+            }
+        }).catch((err) => {
+            console.log(chalk.red(err));
+            res.status(500).json({
+                error: err
+            })
+        })
 });
 
 router.post('/', (req, res, next) => {
-    const order = {
-        productId: req.body.productId,
-        quantity: req.body.quantity
-    }
-    res.status(201).json({
-        message: "POST/order",
-        order: order
-    });
+    Product.findById({ _id: req.body.productId })
+        .exec().then((product) => {
+            if (!product) {
+                res.status(404).json({
+                    message: 'Product not found'
+                });
+            }
+
+            const order = new Order({
+                _id: mongoose.Types.ObjectId(),
+                productId: req.body.productId,
+                quantity: req.body.quantity
+            });
+
+            return order.save();
+        }).then((result) => {
+            if (result) {
+                console.log(chalk.yellow('Result create order: ' + JSON.stringify(result)));
+                res.status(201).json({
+                    message: 'Order created',
+                    createdOrder: {
+                        _id: result._id,
+                        productId: result.productId,
+                        quantity: result.quantity,
+                        request: {
+                            type: 'GET',
+                            description: 'GET_ORDER_BY_ID',
+                            url: 'http://localhost:3000/order/' + result._id
+                        }
+                    }
+                });
+            } else {
+                res.status(404).json({
+                    message: 'URL is invalid'
+                })
+            }
+        }).catch((err) => {
+            console.log(chalk.red(err));
+            res.status(500).json({
+                message: err
+            })
+        });
+
 });
 
 router.get('/:orderId', (req, res, next) => {
-    res.status(200).json({
-        message: "GET/order/{id}",
-        orderId: req.params.orderId
-    });
+    const id = req.params.orderId;
+    Order.findById({ _id: id }).exec()
+        .then((order) => {
+            if (order) {
+                console.log(chalk.yellow('Find order by id: ' + JSON.stringify(order)));
+                res.status(200).json({
+                    message: 'Find order by id success',
+                    order: {
+                        _id: order.id,
+                        productId: order.productId,
+                        quantity: order.quantity,
+                        request: {
+                            type: 'GET',
+                            description: 'GET_ALL_ORDER',
+                            url: 'http://localhost:3000/order'
+                        }
+                    }
+                });
+            } else {
+                res.status(404).json({
+                    message: 'URL is invalid'
+                });
+            }
+        })
+        .catch((err) => {
+            console.log(chalk.red(err));
+            res.status(500).json({
+                error: err
+            });
+        });
 });
 
 router.delete('/:orderId', (req, res, next) => {
-    res.status(200).json({
-        message: "DELETE/order/{id}",
-        orderId: req.params.orderId
-    });
+    const id = req.params.id;
+    Order.deleteOne({ _id: id }).exec()
+        .then((result) => {
+            console.log(chalk.yellow('Delete order by id: ' + JSON.stringify(result)));
+            if (result) {
+                res.status(200).json({
+                    message: 'Order deleted',
+                    request: {
+                        type: 'POST',
+                        description: 'CREATE_A_NEW_ORDER',
+                        url: 'http://localhost:3000/',
+                        body: { productId: 'mongoose.Schema.Types.ObjectId', quantity: 'Number' }
+                    }
+                });
+            } else {
+                res.status(404).json({
+                    message: 'URL is invalid'
+                })
+            }
+        })
+        .catch((err) => {
+            console.log(chalk.red(err));
+            res.status(500).json({
+                error: err
+            });
+        });
 });
 
 module.exports = router;

@@ -116,7 +116,7 @@ router.patch('/:productId', (req, res, next) => {
     for (const opt of req.body) {
         updateOps[opt.propName] = opt.value;
     }
-    Product.update({ _id: id, $set: updateOps }).exec()
+    Product.updateOne({ _id: id, $set: updateOps }).exec()
         .then(result => {
             console.log(chalk.yellow('Result update product by id: ' + JSON.stringify(result)));
             if (result) {
