@@ -1,10 +1,24 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const chalk = require('chalk');
+const multer = require('multer');
 
 const Product = require('../models/product.model');
 
 const router = express.Router();
+
+// const storage = multer.diskStorage({
+//     destination: function(req, file, cb) {
+//       cb(null, './public/uploads/');
+//     },
+//     filename: function(req, file, cb) {
+//       cb(null, new Date().toISOString() + file.originalname);
+//     }
+//   });
+
+// const upload = multer({storage: storage});
+
+// const upload = multer({ dest: './public/uploads/' });
 
 router.get('/', (req, res, next) => {
     Product.find()

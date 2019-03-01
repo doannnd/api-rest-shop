@@ -51,7 +51,7 @@ router.post('/', (req, res, next) => {
                 });
             }
             const order = new Order({
-                _id: mongoose.Types.ObjectId(),
+                _id: new mongoose.Types.ObjectId(),
                 product: req.body.productId,
                 quantity: req.body.quantity
             });

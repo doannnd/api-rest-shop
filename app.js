@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 
 const productRoute = require('./api/routes/product.route');
 const orderRoute = require('./api/routes/order.route');
+const userRoute = require('./api/routes/user.route');
 
 require('dotenv').config();
 
@@ -32,6 +33,7 @@ app.use((req, res, next) => {
 
 app.use('/product', productRoute);
 app.use('/order', orderRoute);
+app.use('/user', userRoute);
 
 app.use((req, res, next) => {
     const error = new Error('Not found');
